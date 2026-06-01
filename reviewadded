@@ -1,0 +1,36 @@
+curl -X POST http://localhost:5000/register \
+>   -H "Content-Type: application/json" \
+>   -d '{"username":"paulo","password":"1234"}'
+{"message":"User successfully registered. Now you can login"}
+
+curl -X POST http://localhost:5000/customer/login \
+>   -H "Content-Type: application/json" \
+>   -d '{"username":"paulo","password":"1234"}' \
+>   -c paulo-cookies.txt
+User successfully logged in
+
+curl -X PUT "http://localhost:5000/customer/auth/review/1?review=Great%20book" \
+>   -b paulo-cookies.txt
+{"message":"Review successfully added"}
+
+curl -X PUT "http://localhost:5000/customer/auth/review/1?review=Amazing%20classic" \
+>   -b paulo-cookies.txt
+{"message":"Review successfully modified"}
+
+curl -X POST http://localhost:5000/register \
+>   -H "Content-Type: application/json" \
+>   -d '{"username":"maria","password":"abcd"}'
+{"message":"User successfully registered. Now you can login"}
+
+curl -X POST http://localhost:5000/customer/login \
+>   -H "Content-Type: application/json" \
+>   -d '{"username":"maria","password":"abcd"}' \
+>   -c maria-cookies.txt
+User successfully logged in
+
+curl -X PUT "http://localhost:5000/customer/auth/review/1?review=Beautiful%20story" \
+>   -b maria-cookies.txt
+{"message":"Review successfully added"}
+
+curl http://localhost:5001/review/1
+{"paulo":"Amazing classic","maria":"Beautiful story"}
