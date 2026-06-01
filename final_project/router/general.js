@@ -6,6 +6,9 @@ let users = require("./auth_users.js").users;
 const public_users = express.Router();
 const BOOKS_API_URL = "http://localhost:5001/";
 
+const getBooksFromResponse = (response) => {
+  return typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+};
 
 public_users.post("/register", (req,res) => {
   const username = req.body.username;
@@ -44,15 +47,17 @@ public_users.get('/',function (req, res) {
 public_users.get('/isbn/:isbn',function (req, res) {
   const isbn = req.params.isbn;
 
-  return new Promise((resolve, reject) => {
-    if (books[isbn]) {
-      resolve(books[isbn]);
-    } else {
-      reject("Book not found");
-    }
-  })
-    .then((book) => res.send(book))
-    .catch((error) => res.status(404).json({message: error}));
+  return axios.get(BOOKS_API_URL)
+    .then((response) => {
+      const booksList = getBooksFromResponse(response);
+
+      if (booksList[isbn]) {
+        return res.send(booksList[isbn]);
+      }
+
+      return res.status(404).json({message: "Book not found"});
+    })
+    .catch(() => res.status(500).json({message: "Unable to fetch books"}));
 });
   
 // Get book details based on author
@@ -61,7 +66,7 @@ public_users.get('/author/:author',function (req, res) {
 
   return axios.get(BOOKS_API_URL)
     .then((response) => {
-      const booksList = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+      const booksList = getBooksFromResponse(response);
       const matchingBooks = Object.values(booksList).filter(book => book.author === author);
 
       if (matchingBooks.length > 0) {
@@ -77,17 +82,18 @@ public_users.get('/author/:author',function (req, res) {
 public_users.get('/title/:title',function (req, res) {
   const title = req.params.title;
 
-  return new Promise((resolve, reject) => {
-    const matchingBooks = Object.values(books).filter(book => book.title === title);
+  return axios.get(BOOKS_API_URL)
+    .then((response) => {
+      const booksList = getBooksFromResponse(response);
+      const matchingBooks = Object.values(booksList).filter(book => book.title === title);
 
     if (matchingBooks.length > 0) {
-      resolve(matchingBooks);
-    } else {
-      reject("Title not found");
+        return res.send(matchingBooks);
     }
-  })
-    .then((booksByTitle) => res.send(booksByTitle))
-    .catch((error) => res.status(404).json({message: error}));
+
+      return res.status(404).json({message: "Title not found"});
+    })
+    .catch(() => res.status(500).json({message: "Unable to fetch books"}));
 });
 
 //  Get book review
