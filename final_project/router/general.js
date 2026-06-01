@@ -6,10 +6,26 @@ let users = require("./auth_users.js").users;
 const public_users = express.Router();
 const BOOKS_API_URL = "http://localhost:5001/";
 
+// Public book review routes.
+// These routes handle registration and read-only book lookup operations that do
+// not require an authenticated session.
+
+/**
+ * Normalize the response returned by the local books API.
+ *
+ * Some routes fetch the book catalog with axios instead of reading booksdb.js
+ * directly. Depending on the server response, axios may return parsed JSON or a
+ * JSON string, so this helper guarantees the route handlers receive an object.
+ *
+ * @param {object} response - Axios response from the books API.
+ * @returns {object} Book catalog keyed by ISBN.
+ */
 const getBooksFromResponse = (response) => {
   return typeof response.data === "string" ? JSON.parse(response.data) : response.data;
 };
 
+// Register a new public user when both username and password are provided.
+// Usernames must be unique according to auth_users.isValid().
 public_users.post("/register", (req,res) => {
   const username = req.body.username;
   const password = req.body.password;
@@ -30,7 +46,7 @@ public_users.post("/register", (req,res) => {
   return res.status(400).json({message: "Unable to register user."});
 });
 
-// Get the book list available in the shop
+// Return the complete book catalog available in the shop.
 public_users.get('/',function (req, res) {
   return new Promise((resolve, reject) => {
     if (books) {
@@ -43,7 +59,7 @@ public_users.get('/',function (req, res) {
     .catch((error) => res.status(404).json({message: error}));
 });
 
-// Get book details based on ISBN
+// Look up one book by ISBN using the local books API.
 public_users.get('/isbn/:isbn',function (req, res) {
   const isbn = req.params.isbn;
 
@@ -60,7 +76,8 @@ public_users.get('/isbn/:isbn',function (req, res) {
     .catch(() => res.status(500).json({message: "Unable to fetch books"}));
 });
   
-// Get book details based on author
+// Return all books written by the requested author.
+// The match is exact and case-sensitive because it compares stored author names directly.
 public_users.get('/author/:author',function (req, res) {
   const author = req.params.author;
 
@@ -78,7 +95,8 @@ public_users.get('/author/:author',function (req, res) {
     .catch(() => res.status(500).json({message: "Unable to fetch books"}));
 });
 
-// Get all books based on title
+// Return all books with the requested title.
+// The match is exact and case-sensitive because it compares stored titles directly.
 public_users.get('/title/:title',function (req, res) {
   const title = req.params.title;
 
@@ -96,7 +114,7 @@ public_users.get('/title/:title',function (req, res) {
     .catch(() => res.status(500).json({message: "Unable to fetch books"}));
 });
 
-//  Get book review
+// Return the reviews object for a book identified by ISBN.
 public_users.get('/review/:isbn',function (req, res) {
   const isbn = req.params.isbn;
   const book = books[isbn];
