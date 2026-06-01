@@ -4,7 +4,7 @@ let books = require("./booksdb.js");
 let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const public_users = express.Router();
-const BOOKS_API_URL = "http://localhost:5001/";
+const BOOKS_API_URL = `http://localhost:${process.env.PORT || 5001}/`;
 
 // Public book review routes.
 // These routes handle registration and read-only book lookup operations that do
@@ -59,7 +59,7 @@ public_users.get('/',function (req, res) {
     .catch((error) => res.status(404).json({message: error}));
 });
 
-// Look up one book by ISBN using the local books API.
+// Retrieve one book by ISBN using axios to read from the local books API.
 public_users.get('/isbn/:isbn',function (req, res) {
   const isbn = req.params.isbn;
 
@@ -76,7 +76,7 @@ public_users.get('/isbn/:isbn',function (req, res) {
     .catch(() => res.status(500).json({message: "Unable to fetch books"}));
 });
   
-// Return all books written by the requested author.
+// Retrieve all books written by the requested author using axios.
 // The match is exact and case-sensitive because it compares stored author names directly.
 public_users.get('/author/:author',function (req, res) {
   const author = req.params.author;
@@ -95,7 +95,7 @@ public_users.get('/author/:author',function (req, res) {
     .catch(() => res.status(500).json({message: "Unable to fetch books"}));
 });
 
-// Return all books with the requested title.
+// Retrieve all books with the requested title using axios.
 // The match is exact and case-sensitive because it compares stored titles directly.
 public_users.get('/title/:title',function (req, res) {
   const title = req.params.title;
@@ -105,9 +105,9 @@ public_users.get('/title/:title',function (req, res) {
       const booksList = getBooksFromResponse(response);
       const matchingBooks = Object.values(booksList).filter(book => book.title === title);
 
-    if (matchingBooks.length > 0) {
+      if (matchingBooks.length > 0) {
         return res.send(matchingBooks);
-    }
+      }
 
       return res.status(404).json({message: "Title not found"});
     })
